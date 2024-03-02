@@ -2,6 +2,7 @@ use std::time::SystemTime;
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
 use log::info;
+use serde::{Serialize, Deserialize};
 
 // Define um novo tipo 'Result' que é um alias para o tipo Result<T, failure::Error> da biblioteca padrão de Rust.
 pub type Result<T> = std::result::Result<T, failure::Error>; 
@@ -18,6 +19,9 @@ A Block representa um bloco em uma blockchain e contém informações como:
     a altura do bloco na cadeia (height) 
     e um valor nonce usado para mineração (nonce). 
 */
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Block{
     timestamp: u128,           
     transactions: String,      
@@ -27,15 +31,11 @@ pub struct Block{
     nonce: i32,                
 }
 
-/*
-    A Blockchain é uma estrutura que contém uma lista de blocos (blocks), 
-    representada como um vetor de Block. Ela é usada para armazenar e gerenciar a cadeia de blocos.
-*/
-pub struct Blockchain {
-    blocks: Vec<Block> // Define uma estrutura 'Blockchain' que contém um vetor de blocos.
-}
-
 impl Block	{
+
+    pub fn get_prev_hash(&self) -> String{
+        self.perv_block_hash.clone()
+    }
     
     // Método público que retorna o hash do bloco.
     pub fn get_hash(&self) -> String { 
@@ -77,7 +77,7 @@ impl Block	{
         while !self.validate()?{
             self.nonce += 1; // Incrementa o valor do nonce para tentar encontrar um hash válido.
         }
-    
+
         // Prepara os dados para hashing.
         let data = self.prepare_hash_data()?;  
         
@@ -133,29 +133,4 @@ impl Block	{
         Ok(&hasher.result_str()[0..TARGET_HEXT] == String::from_utf8(vec1)?)
     }
     
-}
-
-impl Blockchain{
-    // Método estático para criar uma nova instância de Blockchain, iniciando com o bloco gênese.
-    pub fn new() -> Blockchain{
-        Blockchain{
-            // Inicializa a cadeia de blocos com o bloco gênese.
-            blocks: vec![Block::new_genesis_block()] 
-        }
-    }
-
-    // Método para adicionar um novo bloco à cadeia de blocos.
-    pub fn add_block(&mut self, data: String) -> Result<()>{
-        // Obtém o último bloco na cadeia.
-        let prev = self.blocks.last().unwrap(); 
-        
-        // Cria um novo bloco com os dados fornecidos, o hash do último bloco como hash anterior e o valor do alvo.
-        let new_block = Block::new_block(data, prev.get_hash(), TARGET_HEXT)?;
-        
-        // Adiciona o novo bloco à cadeia de blocos.
-        self.blocks.push(new_block); 
-        
-        // Retorna Ok(()) para indicar que a operação foi bem-sucedida.
-        Ok(())                       
-    }
 }
